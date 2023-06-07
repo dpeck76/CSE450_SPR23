@@ -1,0 +1,176 @@
+# Here is my R code that I used throughout the Module 4
+
+data <- read.csv("https://raw.githubusercontent.com/byui-cse/cse450-course/master/data/bikes.csv")
+data$month <- as.factor(month(mdy(data$dteday)))
+data$season <- as.factor(data$season)
+data$holiday <- as.factor(data$holiday)
+data$workingday <- as.factor(data$workingday)
+data$weathersit <- as.factor(data$weathersit)
+data$hum_binned <- as.factor(round(data$hum,1))
+data$windspeed_binned <- as.factor(round(data$windspeed,-1))
+data$temp_c_binned <- as.factor(round(data$temp_c,-1))
+data$dayofweek <- as.factor(lubridate::wday(mdy(data$dteday)))
+data$users <- data$casual + data$registered
+
+plot(casual~as.factor(season), data=data)
+plot(casual~hr, data=data)
+plot(casual~holiday, data=data)
+plot(casual~workingday, data=data)
+plot(casual~as.factor(weathersit), data=data)
+plot(casual~hum, data=data)
+plot(casual~windspeed, data=data)
+plot(casual~temp_c, data=data)
+plot(casual~feels_like_c, data=data)
+plot(casual~as.factor(month), data=data)
+plot(casual~hum_binned, data=data)
+plot(casual~windspeed_binned, data=data)
+plot(casual~temp_c_binned, data=data)
+
+
+plot(registered~as.factor(season), data=data)
+plot(registered~as.factor(hr), data=data)
+plot(registered~as.factor(holiday), data=data)
+plot(registered~as.factor(workingday), data=data)
+plot(registered~as.factor(weathersit), data=data)
+plot(registered~hum, data=data)
+plot(registered~windspeed, data=data)
+plot(registered~temp_c, data=data)
+plot(registered~feels_like_c, data=data)
+plot(registered~as.factor(month), data=data)
+plot(registered~windspeed_binned, data=data)
+plot(registered~temp_c_binned, data=data)
+
+
+hist(data$registered)
+hist(data$casual)
+dim(data)
+
+
+colnames(data)
+
+
+data$season <- case_when(data$season == 1 ~ "Winter",
+                         data$season == 2 ~ "Spring",
+                         data$season == 3 ~ "Summer",
+                         data$season == 4 ~ "Fall")
+data$season <- factor(data$season, levels = c("Winter", "Spring", "Summer", "Fall"))
+
+# Make month column, one hot encode season and weathersit
+# Make visual to show y variables by month, maybe by temp/season
+# Working day to show that registered are higher on workingdays and casuals are lower on workingdays
+
+upperlim <- 800
+
+
+# Total Users by Month and season
+ggplot(data=data)+
+  geom_boxplot(mapping=aes(y = users, x = month, fill = as.factor(season)))+
+  theme_classic()+
+  labs(
+    x = "Month",
+    y = "Rental Bike Users",
+    fill = "",
+    title = "Bike Rentals Increase in Warmer Seasons"
+  ) + 
+  coord_cartesian(ylim = c(0,upperlim)) + 
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+
+
+# Total Users by temperature (C)
+ggplot(data = data) + 
+  geom_point(mapping = aes(x = temp_c, 
+                           y = users),
+             alpha = 0.1,
+             pch = 16
+  )+
+  geom_smooth(mapping = aes(x = temp_c, 
+                            y = users),
+              method = "loess",
+              color = "red",
+              formula = 'y ~ x') + 
+  theme_classic() + 
+  coord_cartesian(ylim = c(0,700)) + 
+  labs(
+    title = "Total number of users Increases with Temperature",
+    x = "Temperature (C)",
+    y = "Bike Rental Users"
+  ) + 
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+
+# Casual by weathersit
+ggplot(data = data) + 
+  geom_boxplot(mapping = aes(x = as.factor(weathersit),
+                             y = casual)) + 
+  coord_cartesian(ylim = c(0,100))
+
+# Registered by weathersit
+# - 1: Clear, Few clouds, Partly cloudy, Partly cloudy 
+# - 2: Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist 
+# - 3: Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds 
+# - 4: Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog 
+ggplot(data = data) + 
+  geom_boxplot(mapping = aes(x = as.factor(weathersit),
+                             y = users),
+               fill = "skyblue") + 
+  coord_cartesian(ylim = c(0,800)) + 
+  theme_classic() + 
+  labs(
+    x = "",
+    y = "Bike Rental Users",
+    title = "Bad Weather Significantly Decreases Rental Bike Usage",
+    subtitle = "Distribution of Rental Bike Users By Weather Situation"
+  ) + 
+  scale_x_discrete(labels = c("Clear", "Cloudy", "Light Percipitation", "Heavy Percipitation")) + 
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+  
+
+# Distribution of Hourly Users by weeknds and Holidays and workingdays
+# Boxplot 
+ggplot(data = data, mapping = aes(x = as.factor(workingday),
+                                  y = users)) + 
+  geom_boxplot(fill = "skyblue") + 
+  coord_cartesian(ylim = c(0,800)) + 
+  theme_classic() + 
+  labs(
+    x = "",
+    y = "Bike Rental Users",
+    title = "Commuters Appear to be a Majority, but not by Much",
+    subtitle = "Distribution By Weekends/Holidays vs. Working Days"
+  ) + 
+  scale_x_discrete(labels = c("Weekend/Holiday", "Working Day")) + 
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+
+# Hourly Users on Working days
+ggplot() + 
+  geom_boxplot(data = data, mapping = aes(x = as.factor(hr), 
+                                         y = users,
+                                         fill = as.factor(workingday))
+               ) + 
+  theme_classic() + 
+  theme(
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  ) + 
+  scale_x_discrete(labels = c("12am","1am", "2am", "3am", "4am", "5am", "6am", "7am",
+                              "8am", "9am", "10am", "11am", "12pm", "1pm", "2pm", "3pm",
+                              "4pm", "5pm", "6pm", "7pm", "8pm", "9pm", "10pm", "11pm")) + 
+  labs(
+    x = "",
+    y = "Rental Bike Users",
+    title = "Registered and Casual Bike Rental User Distributions Differ By Time of Day",
+    subtitle = "Registered User Rates are High at Commuting Times, While Casual User\nRates are High During Warmer afternoon and Evening Hours"
+  )
+
+
